@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  flutter:
+    name: Flutter (analyze · test · build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test
+
+      - name: Build APK
+        run: flutter build apk --release
+
+      - name: Build web
+        run: flutter build web
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-apk
+          path: app/build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
+
+  backend:
+    name: Backend (python syntax)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compile-check backend scripts
+        run: python -m compileall backend/scripts backend/functions
